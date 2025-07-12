@@ -1,12 +1,11 @@
 import {
-  Event,
-  EventEmitter,
   ProviderResult,
   ThemeIcon,
   TreeDataProvider,
   TreeItem,
   workspace,
 } from 'vscode';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 import { EXTENSION_ID } from '../configs';
 import { ListFilesController } from '../controllers';
@@ -23,45 +22,16 @@ import { NodeModel } from '../models';
  * @property {EventEmitter<NodeModel | undefined | null | void>} _onDidChangeTreeData - The onDidChangeTreeData event emitter
  * @property {Event<NodeModel | undefined | null | void>} onDidChangeTreeData - The onDidChangeTreeData event
  * @property {ListFilesController} controller - The list of files controller
- * @example
- * const provider = new ListRoutesProvider();
- *
- * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
  */
-export class ListRoutesProvider implements TreeDataProvider<NodeModel> {
+export class ListRoutesProvider
+  extends TreeRefreshBase<NodeModel>
+  implements TreeDataProvider<NodeModel>
+{
   // -----------------------------------------------------------------
   // Properties
   // -----------------------------------------------------------------
 
   // Private properties
-  /**
-   * The onDidChangeTreeData event emitter.
-   * @type {EventEmitter<NodeModel | undefined | null | void>}
-   * @private
-   * @memberof ListRoutesProvider
-   * @example
-   * this._onDidChangeTreeData = new EventEmitter<Node | undefined | null | void>();
-   * this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#EventEmitter
-   */
-  private _onDidChangeTreeData: EventEmitter<
-    NodeModel | undefined | null | void
-  >;
-
-  // Public properties
-  /**
-   * The onDidChangeTreeData event.
-   * @type {Event<NodeModel | undefined | null | void>}
-   * @public
-   * @memberof ListRoutesProvider
-   * @example
-   * readonly onDidChangeTreeData: Event<Node | undefined | null | void>;
-   * this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#Event
-   */
-  readonly onDidChangeTreeData: Event<NodeModel | undefined | null | void>;
 
   // -----------------------------------------------------------------
   // Constructor
@@ -72,13 +42,9 @@ export class ListRoutesProvider implements TreeDataProvider<NodeModel> {
    *
    * @constructor
    * @public
-   * @memberof ListRoutesProvider
    */
   constructor() {
-    this._onDidChangeTreeData = new EventEmitter<
-      NodeModel | undefined | null | void
-    >();
-    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    super();
   }
 
   // -----------------------------------------------------------------
@@ -92,13 +58,7 @@ export class ListRoutesProvider implements TreeDataProvider<NodeModel> {
    * @function getTreeItem
    * @param {NodeModel} element - The element
    * @public
-   * @memberof ListRoutesProvider
-   * @example
-   * const treeItem = provider.getTreeItem(element);
-   *
    * @returns {TreeItem | Thenable<TreeItem>} - The tree item
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
    */
   getTreeItem(element: NodeModel): TreeItem | Thenable<TreeItem> {
     return element;
@@ -110,13 +70,7 @@ export class ListRoutesProvider implements TreeDataProvider<NodeModel> {
    * @function getChildren
    * @param {NodeModel} [element] - The element
    * @public
-   * @memberof ListRoutesProvider
-   * @example
-   * const children = provider.getChildren(element);
-   *
    * @returns {ProviderResult<NodeModel[]>} - The children
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
    */
   getChildren(element?: NodeModel): ProviderResult<NodeModel[]> {
     if (element) {
@@ -126,54 +80,35 @@ export class ListRoutesProvider implements TreeDataProvider<NodeModel> {
     return this.getListRoutes();
   }
 
-  /**
-   * Refreshes the tree data.
-   *
-   * @function refresh
-   * @public
-   * @memberof FeedbackProvider
-   * @example
-   * provider.refresh();
-   *
-   * @returns {void} - No return value
-   */
-  refresh(): void {
-    this._onDidChangeTreeData.fire();
-  }
-
   // Private methods
   /**
-   * Returns the list of files.
-   *
-   * @function getListRoutes
+   * Returns the list of route nodes with their children.
    * @private
-   * @memberof ListRoutesProvider
-   * @example
-   * const files = provider.getListRoutes();
-   *
-   * @returns {Promise<NodeModel[] | undefined>} - The list of files
+   * @returns {Promise<NodeModel[] | undefined>} List of route nodes or undefined if none exist.
    */
   private async getListRoutes(): Promise<NodeModel[] | undefined> {
-    const files = await ListFilesController.getFiles();
+    const allFiles = await ListFilesController.getFiles();
 
-    if (!files) {
+    if (!allFiles) {
       return;
     }
 
-    for (const file of files) {
+    for (const file of allFiles) {
       const document = await workspace.openTextDocument(
         file.resourceUri?.path ?? '',
       );
 
-      const children = Array.from(
+      // Create an array of line nodes for each file
+      const lineNodes = Array.from(
         { length: document.lineCount },
         (_, index) => {
           const line = document.lineAt(index);
 
-          let node: NodeModel | undefined;
+          // Create a route node for each line that matches the pattern
+          let routeNode: NodeModel | undefined;
 
           if (line.text.match(/:[\w\s]+procedure/gi)) {
-            node = new NodeModel(
+            routeNode = new NodeModel(
               line.text.trim(),
               new ThemeIcon('symbol-method'),
               {
@@ -184,19 +119,22 @@ export class ListRoutesProvider implements TreeDataProvider<NodeModel> {
             );
           }
 
-          return node;
+          return routeNode;
         },
       );
 
+      // Set the children of the file to the line nodes
       file.setChildren(
-        children.filter((child) => child !== undefined) as NodeModel[],
+        lineNodes.filter((child) => child !== undefined) as NodeModel[],
       );
     }
 
-    const nodes = files.filter(
+    // Filter the files to only include those with children
+    const routeNodes = allFiles.filter(
       (file) => file.children && file.children.length !== 0,
     );
 
-    return nodes.length > 0 ? nodes : undefined;
+    // Return the route nodes, or undefined if none exist
+    return routeNodes.length > 0 ? routeNodes : undefined;
   }
 }

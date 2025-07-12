@@ -1,12 +1,11 @@
 import {
-  Event,
-  EventEmitter,
   ProviderResult,
   ThemeIcon,
   TreeDataProvider,
   TreeItem,
   workspace,
 } from 'vscode';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 import { EXTENSION_ID } from '../configs';
 import { ListFilesController } from '../controllers';
@@ -23,45 +22,16 @@ import { NodeModel } from '../models';
  * @property {EventEmitter<NodeModel | undefined | null | void>} _onDidChangeTreeData - The onDidChangeTreeData event emitter
  * @property {Event<NodeModel | undefined | null | void>} onDidChangeTreeData - The onDidChangeTreeData event
  * @property {ListFilesController} controller - The list of files controller
- * @example
- * const provider = new ListHooksProvider();
- *
- * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
  */
-export class ListHooksProvider implements TreeDataProvider<NodeModel> {
+export class ListHooksProvider
+  extends TreeRefreshBase<NodeModel>
+  implements TreeDataProvider<NodeModel>
+{
   // -----------------------------------------------------------------
   // Properties
   // -----------------------------------------------------------------
 
   // Private properties
-  /**
-   * The onDidChangeTreeData event emitter.
-   * @type {EventEmitter<NodeModel | undefined | null | void>}
-   * @private
-   * @memberof ListHooksProvider
-   * @example
-   * this._onDidChangeTreeData = new EventEmitter<Node | undefined | null | void>();
-   * this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#EventEmitter
-   */
-  private _onDidChangeTreeData: EventEmitter<
-    NodeModel | undefined | null | void
-  >;
-
-  // Public properties
-  /**
-   * The onDidChangeTreeData event.
-   * @type {Event<NodeModel | undefined | null | void>}
-   * @public
-   * @memberof ListHooksProvider
-   * @example
-   * readonly onDidChangeTreeData: Event<Node | undefined | null | void>;
-   * this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#Event
-   */
-  readonly onDidChangeTreeData: Event<NodeModel | undefined | null | void>;
 
   // -----------------------------------------------------------------
   // Constructor
@@ -72,13 +42,9 @@ export class ListHooksProvider implements TreeDataProvider<NodeModel> {
    *
    * @constructor
    * @public
-   * @memberof ListHooksProvider
    */
   constructor() {
-    this._onDidChangeTreeData = new EventEmitter<
-      NodeModel | undefined | null | void
-    >();
-    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    super();
   }
 
   // -----------------------------------------------------------------
@@ -92,13 +58,7 @@ export class ListHooksProvider implements TreeDataProvider<NodeModel> {
    * @function getTreeItem
    * @param {NodeModel} element - The element
    * @public
-   * @memberof ListHooksProvider
-   * @example
-   * const treeItem = provider.getTreeItem(element);
-   *
    * @returns {TreeItem | Thenable<TreeItem>} - The tree item
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
    */
   getTreeItem(element: NodeModel): TreeItem | Thenable<TreeItem> {
     return element;
@@ -110,13 +70,7 @@ export class ListHooksProvider implements TreeDataProvider<NodeModel> {
    * @function getChildren
    * @param {NodeModel} [element] - The element
    * @public
-   * @memberof ListHooksProvider
-   * @example
-   * const children = provider.getChildren(element);
-   *
    * @returns {ProviderResult<NodeModel[]>} - The children
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
    */
   getChildren(element?: NodeModel): ProviderResult<NodeModel[]> {
     if (element) {
@@ -126,58 +80,39 @@ export class ListHooksProvider implements TreeDataProvider<NodeModel> {
     return this.getListHooks();
   }
 
-  /**
-   * Refreshes the tree data.
-   *
-   * @function refresh
-   * @public
-   * @memberof FeedbackProvider
-   * @example
-   * provider.refresh();
-   *
-   * @returns {void} - No return value
-   */
-  refresh(): void {
-    this._onDidChangeTreeData.fire();
-  }
-
   // Private methods
   /**
-   * Returns the list of files.
-   *
-   * @function getListHooks
+   * Returns the list of hook nodes with their children.
    * @private
-   * @memberof ListHooksProvider
-   * @example
-   * const files = provider.getListHooks();
-   *
-   * @returns {Promise<NodeModel[] | undefined>} - The list of files
+   * @returns {Promise<NodeModel[] | undefined>} List of hook nodes or undefined if none exist.
    */
   private async getListHooks(): Promise<NodeModel[] | undefined> {
-    const files = await ListFilesController.getFiles();
+    const allFiles = await ListFilesController.getFiles();
 
-    if (!files) {
+    if (!allFiles) {
       return;
     }
 
-    for (const file of files) {
+    for (const file of allFiles) {
       const document = await workspace.openTextDocument(
         file.resourceUri?.path ?? '',
       );
 
-      const children = Array.from(
+      // Create an array of line nodes for each file
+      const lineNodes = Array.from(
         { length: document.lineCount },
         (_, index) => {
           const line = document.lineAt(index);
 
-          let node: NodeModel | undefined;
+          // Create a hook node for each line that matches the hook pattern
+          let hookNode: NodeModel | undefined;
 
           if (
             line.text.match(
               /(useCallback|useContext|useDebugValue|useDeferredValue|useEffect|useId|useImperativeHandle|useInsertionEffect|useLayoutEffect|useMemo|useReducer|useRef|useState|useSyncExternalStore|useTransition)/gi,
             )
           ) {
-            node = new NodeModel(
+            hookNode = new NodeModel(
               line.text.trim(),
               new ThemeIcon('symbol-method'),
               {
@@ -188,19 +123,22 @@ export class ListHooksProvider implements TreeDataProvider<NodeModel> {
             );
           }
 
-          return node;
+          return hookNode;
         },
       );
 
+      // Set the children of the file to the line nodes
       file.setChildren(
-        children.filter((child) => child !== undefined) as NodeModel[],
+        lineNodes.filter((child) => child !== undefined) as NodeModel[],
       );
     }
 
-    const nodes = files.filter(
+    // Filter the files to only include those with children
+    const hookNodes = allFiles.filter(
       (file) => file.children && file.children.length !== 0,
     );
 
-    return nodes.length > 0 ? nodes : undefined;
+    // Return the hook nodes, or undefined if there are none
+    return hookNodes.length > 0 ? hookNodes : undefined;
   }
 }

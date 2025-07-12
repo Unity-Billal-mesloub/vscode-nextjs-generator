@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2025-07-12
+
+### Added
+
+- Added `TreeRefreshBase` class to encapsulate refresh logic for `TreeDataProvider` implementations
+
+### Changed
+
+- Updated `ListComponentsProvider`, `ListFilesProvider`, `ListHooksProvider`, and `ListRoutesProvider` to extend `TreeRefreshBase`, simplifying event handling
+- Improved activation logic in `extension.ts` to handle workspace folder selection and update notifications
+- Implemented version check and update prompt for the extension using VSCode Marketplace Client
+
 ## [2.6.0] - 2025-01-09
 
 ### Added
@@ -213,7 +225,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.6.0...HEAD
+[unreleased]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.4.0...v2.5.0

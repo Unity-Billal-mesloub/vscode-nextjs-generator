@@ -1,8 +1,8 @@
 {
   "name": "vscode-nextjs-generator",
-  "displayName": "T3 Stack / NextJS / ReactJS File Generator",
-  "description": "⚛ VSCode extension to generate files for T3 Stack project. It includes NextJS, ReactJS, Prisma, Drizzle, TailwindCSS, i18next, Zod, and more.",
-  "version": "2.6.0",
+  "displayName": "T3 Stack / Next.js / React File Generator",
+  "description": "⚛ Generate boilerplate files for Next.js, React, Prisma, Drizzle, TailwindCSS, i18next, Zod, and more in your T3 Stack projects. Speed up your workflow with ready-to-use snippets and commands, all from VSCode-based editor.",
+  "version": "2.7.0",
   "icon": "icon.png",
   "galleryBanner": {
     "color": "#52137b",
@@ -204,7 +204,7 @@
           "type": "string",
           "default": "~",
           "scope": "resource",
-          "description": "Sets the default import alias for the generated files"
+          "description": "Default import alias used in generated files (e.g. '~' for '@/')."
         },
         "nextjs.files.extension": {
           "type": "string",
@@ -216,7 +216,7 @@
             "tsx"
           ],
           "scope": "resource",
-          "description": "Sets the default extension for the generated files"
+          "description": "File extension to use when generating new files (e.g. 'ts', 'tsx', 'js', 'jsx')."
         },
         "nextjs.files.showType": {
           "type": "boolean",
@@ -233,7 +233,7 @@
             "tsx"
           ],
           "scope": "resource",
-          "description": "Glob patterns to include in the package. The default is js, jsx, ts, and tsx."
+          "description": "Glob patterns for files and folders to include in file generation. Default: all workspace files."
         },
         "nextjs.files.exclude": {
           "type": "array",
@@ -245,7 +245,7 @@
             "**/.*/**"
           ],
           "scope": "resource",
-          "description": "Glob patterns to exclude from the package. The default is node_modules, dist, out, build, and any hidden files."
+          "description": "Folders to exclude from file generation. Default: node_modules, dist, out, build, hidden files."
         },
         "nextjs.files.watch": {
           "type": "array",
@@ -273,7 +273,7 @@
           "type": "boolean",
           "default": false,
           "scope": "resource",
-          "description": "Start server in https mode. Use `--experimental-https` flag (only for NextJS 14+)"
+          "description": "Enable HTTPS mode for the development server (Next.js 14+ only). Uses the `--experimental-https` flag."
         }
       }
     },
@@ -791,19 +791,19 @@
     "viewsWelcome": [
       {
         "view": "nextjs.listHooksView",
-        "contents": "Sorry, no hooks were found. Please ensure that you have a defined component configured.\n[Generate Component](command:nextjs.file.component)\nTo learn more about how to use T3 Stack / NextJS / ReactJS File Generator for VS Code [read our docs](https://github.com/ManuelGil/vscode-nextjs-generator)."
+        "contents": "No hooks found yet. Make sure you have at least one component defined in your project.\n[Create a Component](command:nextjs.file.component)\nLearn more: [Documentation](https://github.com/ManuelGil/vscode-nextjs-generator)"
       },
       {
         "view": "nextjs.listComponentsView",
-        "contents": "Sorry, no components were found. Please ensure that you have a defined component configured.\n[Generate Component](command:nextjs.file.component)\nTo learn more about how to use T3 Stack / NextJS / ReactJS File Generator for VS Code [read our docs](https://github.com/ManuelGil/vscode-nextjs-generator)."
+        "contents": "No components found yet. Start by creating a new component to see it listed here.\n[Create a Component](command:nextjs.file.component)\nLearn more: [Documentation](https://github.com/ManuelGil/vscode-nextjs-generator)"
       },
       {
         "view": "nextjs.listRoutesView",
-        "contents": "Sorry, no routes were found. Please ensure that you have a defined router configured.\n[Generate tRPC Router](command:nextjs.file.trpc.router)\nTo learn more about how to use T3 Stack / NextJS / ReactJS File Generator for VS Code [read our docs](https://github.com/ManuelGil/vscode-nextjs-generator)."
+        "contents": "No routes found yet. Add a tRPC router to your project to see routes listed here.\n[Create tRPC Router](command:nextjs.file.trpc.router)\nLearn more: [Documentation](https://github.com/ManuelGil/vscode-nextjs-generator)"
       },
       {
         "view": "nextjs.listFilesView",
-        "contents": "To effectively capture files, ensure you include the plural form of the file type within the workspace settings.\n[Open Workspace Setting](command:workbench.action.openWorkspaceSettingsFile)\nTo learn more about how to use T3 Stack / NextJS / ReactJS File Generator for VS Code [read our docs](https://github.com/ManuelGil/vscode-nextjs-generator)."
+        "contents": "To track files, make sure the plural form of your file types is included in your workspace settings.\n[Open Workspace Settings](command:workbench.action.openWorkspaceSettingsFile)\nLearn more: [Documentation](https://github.com/ManuelGil/vscode-nextjs-generator)"
       }
     ],
     "viewsContainers": {
@@ -864,28 +864,29 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@commitlint/cli": "^19.6.1",
-    "@commitlint/config-conventional": "^19.6.0",
+    "@biomejs/biome": "2.1.1",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@compodoc/compodoc": "^1.1.26",
-    "@types/glob": "^8.1.0",
-    "@types/minimatch": "^3.0.5",
+    "@types/glob": "^9.0.0",
+    "@types/minimatch": "^6.0.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.10.5",
+    "@types/node": "^24.0.13",
     "@types/vscode": "^1.90.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
     "cpy-cli": "^5.0.0",
-    "glob": "^11.0.0",
+    "glob": "^11.0.3",
     "husky": "^9.1.7",
-    "lint-staged": "^15.3.0",
+    "lint-staged": "^16.1.2",
     "rimraf": "^6.0.1",
-    "typescript": "^5.7.3",
+    "typescript": "^5.8.3",
     "vscode-test": "^1.6.1"
   },
   "dependencies": {
-    "json-schema-to-zod": "^2.6.0",
+    "json-schema-to-zod": "^2.6.1",
     "json-to-ts": "^2.1.0",
-    "json5": "^2.2.3"
+    "json5": "^2.2.3",
+    "vscode-marketplace-client": "^1.1.0"
   }
 }

@@ -1,11 +1,9 @@
+// String transformation helpers for case and form conversions
+
 /**
- * Changes a string of words separated by spaces or underscores to camel case.
- *
- * @param {string} str - The string to camelize
- * @example
- * camelize('foo bar');
- *
- * @returns {string} - The camelized string
+ * Converts a string to camelCase.
+ * @param {string} str - The string to convert
+ * @returns {string} The camelized string.
  */
 export const camelize = (str: string): string => {
   return str
@@ -31,13 +29,9 @@ export const pascalize = (str: string): string => {
 };
 
 /**
- * Changes a string of words separated by spaces or camel or pascal case.
- *
- * @param {string} str - The string to underscore
- * @example
- * underscore('foo bar');
- *
- * @returns {string} - The underscored string
+ * Converts a string to snake_case.
+ * @param {string} str - The string to convert
+ * @returns {string} The underscored string.
  */
 export const underscore = (str: string): string => {
   return str
@@ -48,13 +42,9 @@ export const underscore = (str: string): string => {
 };
 
 /**
- * Changes a string of words separated by spaces or camel or pascal case to lowercase with underscores.
- *
- * @param {string} str - The string to decamelize
- * @example
- * decamelize('foo bar');
- *
- * @returns {string} - The decamelized string
+ * Converts a string to lower_case_with_underscores from camel or pascal case.
+ * @param {string} str - The string to convert
+ * @returns {string} The decamelized string.
  */
 export const decamelize = (str: string): string => {
   return str
@@ -65,13 +55,9 @@ export const decamelize = (str: string): string => {
 };
 
 /**
- * Changes a string of words separated by spaces or camel or pascal case to human readable form.
- *
- * @param {string} str - The string to humanize
- * @example
- * humanize('foo bar');
- *
- * @returns {string} - The humanized string
+ * Converts a string to a human readable form from camel, pascal or snake case.
+ * @param {string} str - The string to convert
+ * @returns {string} The humanized string.
  */
 export const humanize = (str: string): string => {
   return str
@@ -95,13 +81,9 @@ export const isPluralizable = (str: string): boolean => {
 };
 
 /**
- * Changes a string of words separated by spaces or camel or pascal case to lowercase with dashes.
- *
- * @param {string} str - The string to dasherize
- * @example
- * dasherize('foo bar');
- *
- * @returns {string} - The dasherized string
+ * Converts a string to kebab-case from camel, pascal or snake case.
+ * @param {string} str - The string to convert
+ * @returns {string} The dasherized string.
  */
 export const dasherize = (str: string): string => {
   return str
@@ -150,13 +132,9 @@ export const ordinalize = (num: number): string => {
 };
 
 /**
- * Changes a string to its plural form.
- *
+ * Converts a string to its plural form (basic English pluralization).
  * @param {string} str - The string to pluralize
- * @example
- * pluralize('foo');
- *
- * @returns {string} - The pluralized string
+ * @returns {string} The pluralized string.
  */
 export const pluralize = (str: string): string => {
   if (str.endsWith('y')) {
@@ -169,13 +147,9 @@ export const pluralize = (str: string): string => {
 };
 
 /**
- * Changes a string to its singular form.
- *
+ * Converts a string to its singular form (basic English singularization).
  * @param {string} str - The string to singularize
- * @example
- * singularize('foos');
- *
- * @returns {string} - The singularized string
+ * @returns {string} The singularized string.
  */
 export const singularize = (str: string): string => {
   if (str.endsWith('ies')) {

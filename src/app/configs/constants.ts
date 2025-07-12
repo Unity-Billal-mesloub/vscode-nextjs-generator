@@ -11,17 +11,44 @@
 export const EXTENSION_ID: string = 'nextjs';
 
 /**
+ * Repository ID of the extension (used for publishing and identification).
+ * @type {string}
+ * @public
+ * @example
+ * console.log(EXTENSION_NAME); // vscode-nextjs-generator
+ */
+export const EXTENSION_NAME: string = 'vscode-nextjs-generator';
+
+/**
  * EXTENSION_NAME: The name of the extension.
  * @type {string}
  * @public
  * @memberof Constants
  * @example
- * console.log(EXTENSION_NAME);
+ * console.log(EXTENSION_DISPLAY_NAME);
  *
  * @returns {string} - The name of the extension
  */
-export const EXTENSION_NAME: string =
+export const EXTENSION_DISPLAY_NAME: string =
   'T3 Stack / NextJS / ReactJS File Generator';
+
+/**
+ * GitHub username of the extension maintainer or author.
+ * @type {string}
+ * @public
+ * @example
+ * console.log(USER_NAME); // ManuelGil
+ */
+export const USER_NAME: string = 'ManuelGil';
+
+/**
+ * Publisher of the extension in the VSCode marketplace.
+ * Used for publishing and marketplace identification.
+ * @type {string}
+ * @example
+ * console.log(USER_PUBLISHER); // 'imgildev'
+ */
+export const USER_PUBLISHER: string = 'imgildev';
 
 /**
  * EXTENSION_HOMEPAGE_URL: The homepage URL of the extension.
