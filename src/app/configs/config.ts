@@ -105,15 +105,15 @@ export class Config {
    */
   showPath: boolean;
   /**
-   * Whether to use turbo or not.
+   * Whether to use turbopack or not.
    * @type {boolean}
    * @public
    * @memberof Config
    * @example
    * const config = new Config(workspace.getConfiguration());
-   * console.log(config.turbo);
+   * console.log(config.turbopack);
    */
-  turbo: boolean;
+  turbopack: boolean;
   /**
    * Whether to use experimental https or not.
    * @type {boolean}
@@ -145,7 +145,7 @@ export class Config {
     this.exclude = config.get<string[]>('files.exclude', EXCLUDE);
     this.watch = config.get<string[]>('files.watch', WATCH);
     this.showPath = config.get<boolean>('files.showPath', SHOW_PATH);
-    this.turbo = config.get<boolean>('server.turbo', TURBO);
+    this.turbopack = config.get<boolean>('server.turbo', TURBO);
     this.experimentalHttps = config.get<boolean>(
       'server.experimentalHttps',
       EXPERIMENTAL_HTTPS,
@@ -176,7 +176,7 @@ export class Config {
     this.exclude = config.get<string[]>('files.exclude', EXCLUDE);
     this.watch = config.get<string[]>('files.watch', WATCH);
     this.showPath = config.get<boolean>('files.showPath', SHOW_PATH);
-    this.turbo = config.get<boolean>('server.turbo', TURBO);
+    this.turbopack = config.get<boolean>('server.turbo', TURBO);
     this.experimentalHttps = config.get<boolean>(
       'server.experimentalHttps',
       EXPERIMENTAL_HTTPS,

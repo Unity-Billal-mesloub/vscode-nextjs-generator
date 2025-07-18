@@ -1,3 +1,4 @@
+import pLimit from 'p-limit';
 import {
   ProviderResult,
   ThemeIcon,
@@ -5,11 +6,11 @@ import {
   TreeItem,
   workspace,
 } from 'vscode';
-import { TreeRefreshBase } from './tree-refresh-base';
 
 import { EXTENSION_ID } from '../configs';
 import { ListFilesController } from '../controllers';
 import { NodeModel } from '../models';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 /**
  * The ListComponentsProvider class
@@ -32,6 +33,26 @@ export class ListComponentsProvider
   // -----------------------------------------------------------------
 
   // Private properties
+  /**
+   * The cached nodes.
+   * @type {NodeModel[] | undefined}
+   * @private
+   * @memberof ListComponentsProvider
+   * @example
+   * this._cachedNodes = undefined;
+   */
+  private _cachedNodes: NodeModel[] | undefined = undefined;
+
+  /**
+   * The cache promise.
+   * @type {Promise<NodeModel[] | undefined> | undefined}
+   * @private
+   * @memberof ListComponentsProvider
+   * @example
+   * this._cachePromise = undefined;
+   */
+  private _cachePromise: Promise<NodeModel[] | undefined> | undefined =
+    undefined;
 
   // -----------------------------------------------------------------
   // Constructor
@@ -42,6 +63,7 @@ export class ListComponentsProvider
    *
    * @constructor
    * @public
+   * @memberof ListComponentsProvider
    */
   constructor() {
     super();
@@ -77,7 +99,49 @@ export class ListComponentsProvider
       return element.children;
     }
 
-    return this.getListComponents();
+    if (this._cachedNodes) {
+      return this._cachedNodes;
+    }
+
+    if (this._cachePromise) {
+      return this._cachePromise;
+    }
+
+    this._cachePromise = this.getListComponents().then((nodes) => {
+      this._cachedNodes = nodes;
+      this._cachePromise = undefined;
+      return nodes;
+    });
+
+    return this._cachePromise;
+  }
+
+  /**
+   * Refreshes the tree data by firing the event.
+   *
+   * @function refresh
+   * @public
+   * @returns {void} - No return value
+   */
+  refresh(): void {
+    this._cachedNodes = undefined;
+    this._cachePromise = undefined;
+    super.refresh();
+  }
+
+  /**
+   * Disposes the provider.
+   *
+   * @function dispose
+   * @public
+   * @memberof ListComponentsProvider
+   * @example
+   * provider.dispose();
+   *
+   * @returns {void} - No return value
+   */
+  dispose(): void {
+    super.dispose();
   }
 
   // Private methods
@@ -90,51 +154,61 @@ export class ListComponentsProvider
     const allFiles = await ListFilesController.getFiles();
 
     if (!allFiles) {
-      return;
+      return [];
     }
 
-    for (const file of allFiles) {
-      const document = await workspace.openTextDocument(
-        file.resourceUri?.path ?? '',
-      );
+    const componentRegex = /<\/?([A-Z][A-Za-z0-9_]*)\b/;
+    const limit = pLimit(2);
 
-      // Create an array of line nodes for each file
-      const lineNodes = Array.from(
-        { length: document.lineCount },
-        (_, index) => {
-          const line = document.lineAt(index);
-
-          // Create a node for each line that matches the pattern
-          let componentNode: NodeModel | undefined;
-
-          if (line.text.match(/:[\w\s]+procedure/gi)) {
-            componentNode = new NodeModel(
-              line.text.trim(),
-              new ThemeIcon('symbol-method'),
-              {
-                command: `${EXTENSION_ID}.list.gotoLine`,
-                title: line.text,
-                arguments: [file.resourceUri, index],
-              },
-            );
+    await Promise.all(
+      allFiles.map((file) =>
+        limit(async () => {
+          if (!file.resourceUri) {
+            file.setChildren([]);
+            return;
           }
 
-          return componentNode;
-        },
-      );
+          try {
+            const document = await workspace.openTextDocument(
+              file.resourceUri.fsPath,
+            );
+            const children: NodeModel[] = [];
 
-      // Set the children of the file to the line nodes
-      file.setChildren(
-        lineNodes.filter((child) => child !== undefined) as NodeModel[],
-      );
-    }
+            for (let i = 0; i < document.lineCount; i++) {
+              const text = document.lineAt(i).text;
+              const match = componentRegex.exec(text);
+              if (match) {
+                const componentName = match[1]?.trim() || '';
 
-    // Filter the files to only include those with children
-    const componentNodes = allFiles.filter(
-      (file) => file.children && file.children.length !== 0,
+                if (componentName) {
+                  children.push(
+                    new NodeModel(
+                      componentName,
+                      new ThemeIcon('symbol-method'),
+                      {
+                        command: `${EXTENSION_ID}.list.gotoLine`,
+                        title: componentName,
+                        arguments: [file.resourceUri, i],
+                      },
+                    ),
+                  );
+                }
+              }
+            }
+
+            file.setChildren(children);
+          } catch (err) {
+            console.error(
+              `Error reading file ${file.resourceUri?.fsPath}:`,
+              err instanceof Error ? err.message : String(err),
+            );
+
+            file.setChildren([]);
+          }
+        }),
+      ),
     );
 
-    // Return the component nodes, or undefined if none exist
-    return componentNodes.length > 0 ? componentNodes : undefined;
+    return allFiles.filter((file) => file.children?.length! > 0);
   }
 }

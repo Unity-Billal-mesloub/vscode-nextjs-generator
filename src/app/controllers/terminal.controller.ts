@@ -203,7 +203,7 @@ export class TerminalController {
     runCommand(
       'start',
       'npx next dev' +
-        (this.config.turbo ? ' --turbo' : '') +
+        (this.config.turbopack ? ' --turbopack' : '') +
         (this.config.experimentalHttps ? ' --experimental-https' : ''),
     );
   }

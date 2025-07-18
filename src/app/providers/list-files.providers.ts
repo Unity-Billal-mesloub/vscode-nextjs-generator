@@ -1,15 +1,10 @@
-import {
-  Event,
-  EventEmitter,
-  ProviderResult,
-  ThemeIcon,
-  TreeDataProvider,
-  TreeItem,
-} from 'vscode';
+import pLimit from 'p-limit';
+import { ProviderResult, ThemeIcon, TreeDataProvider, TreeItem } from 'vscode';
 
 import { ListFilesController } from '../controllers';
 import { singularize, titleize } from '../helpers';
 import { NodeModel } from '../models';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 /**
  * The ListFilesProvider class
@@ -23,26 +18,35 @@ import { NodeModel } from '../models';
  * @property {Event<NodeModel | undefined | null | void>} onDidChangeTreeData - The onDidChangeTreeData event
  * @property {ListFilesController} controller - The list of files controller
  */
-export class ListFilesProvider implements TreeDataProvider<NodeModel> {
+export class ListFilesProvider
+  extends TreeRefreshBase<NodeModel>
+  implements TreeDataProvider<NodeModel>
+{
   // -----------------------------------------------------------------
   // Properties
   // -----------------------------------------------------------------
 
+  // Private properties
   /**
-   * The onDidChangeTreeData event emitter.
-   * @type {EventEmitter<NodeModel | undefined | null | void>}
+   * The cached nodes.
+   * @type {NodeModel[] | undefined}
    * @private
+   * @memberof ListFilesProvider
+   * @example
+   * this._cachedNodes = undefined;
    */
-  private _onDidChangeTreeData: EventEmitter<
-    NodeModel | undefined | null | void
-  >;
+  private _cachedNodes: NodeModel[] | undefined = undefined;
 
   /**
-   * The onDidChangeTreeData event.
-   * @type {Event<NodeModel | undefined | null | void>}
-   * @public
+   * The cache promise.
+   * @type {Promise<NodeModel[] | undefined> | undefined}
+   * @private
+   * @memberof ListFilesProvider
+   * @example
+   * this._cachePromise = undefined;
    */
-  readonly onDidChangeTreeData: Event<NodeModel | undefined | null | void>;
+  private _cachePromise: Promise<NodeModel[] | undefined> | undefined =
+    undefined;
 
   // -----------------------------------------------------------------
   // Constructor
@@ -56,10 +60,7 @@ export class ListFilesProvider implements TreeDataProvider<NodeModel> {
    * @param {ListFilesController} controller - The list of files controller
    */
   constructor(readonly controller: ListFilesController) {
-    this._onDidChangeTreeData = new EventEmitter<
-      NodeModel | undefined | null | void
-    >();
-    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    super();
   }
 
   // -----------------------------------------------------------------
@@ -92,17 +93,49 @@ export class ListFilesProvider implements TreeDataProvider<NodeModel> {
       return element.children;
     }
 
-    return this.getListFiles();
+    if (this._cachedNodes) {
+      return this._cachedNodes;
+    }
+
+    if (this._cachePromise) {
+      return this._cachePromise;
+    }
+
+    this._cachePromise = this.getListFiles().then((nodes) => {
+      this._cachedNodes = nodes;
+      this._cachePromise = undefined;
+      return nodes;
+    });
+
+    return this._cachePromise;
   }
 
   /**
-   * Refreshes the tree data.
+   * Refreshes the tree data by firing the event.
    *
    * @function refresh
    * @public
+   * @returns {void} - No return value
    */
   refresh(): void {
-    this._onDidChangeTreeData.fire();
+    this._cachedNodes = undefined;
+    this._cachePromise = undefined;
+    super.refresh();
+  }
+
+  /**
+   * Disposes the provider.
+   *
+   * @function dispose
+   * @public
+   * @memberof ListFilesProvider
+   * @example
+   * provider.dispose();
+   *
+   * @returns {void} - No return value
+   */
+  dispose(): void {
+    super.dispose();
   }
 
   // Private methods
@@ -118,34 +151,35 @@ export class ListFilesProvider implements TreeDataProvider<NodeModel> {
       return;
     }
 
-    // Use descriptive variable names for clarity
-    const fileTypeNodes: NodeModel[] = [];
-
     const fileTypes = ListFilesController.config.watch;
 
-    for (const fileType of fileTypes) {
-      const filesOfType = files.filter((file) =>
-        file.label.toString().includes(`${singularize(fileType)}`),
-      );
+    const limit = pLimit(2);
 
-      if (filesOfType.length !== 0) {
-        const typeNode = new NodeModel(
-          `${fileType}: ${filesOfType.length}`,
-          new ThemeIcon('folder-opened'),
-          undefined,
-          undefined,
-          fileType,
-          filesOfType,
-        );
+    const groups = await Promise.all(
+      fileTypes.map((type) =>
+        limit(async () => {
+          const suffix = `${singularize(type)}`;
 
-        fileTypeNodes.push(typeNode);
-      }
-    }
+          const children = files.filter((file) =>
+            file.label.toString().includes(suffix),
+          );
 
-    if (fileTypeNodes.length === 0) {
-      return;
-    }
+          if (children.length === 0) {
+            return;
+          }
 
-    return fileTypeNodes;
+          return new NodeModel(
+            `${titleize(type)}: ${children.length}`,
+            new ThemeIcon('folder-opened'),
+            undefined,
+            undefined,
+            type,
+            children,
+          );
+        }),
+      ),
+    );
+
+    return groups.filter((node): node is NodeModel => node !== undefined);
   }
 }

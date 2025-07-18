@@ -116,17 +116,17 @@ export const EXTENSION_SPONSOR_URL: string =
   'https://github.com/sponsors/ManuelGil';
 
 /**
- * EXTENSION_PAYPAL_URL: The PayPal URL of the extension.
+ * EXTENSION_BUY_ME_A_COFFEE_URL: The Buy Me A Coffee URL of the extension.
  * @type {string}
  * @public
  * @memberof Constants
  * @example
- * console.log(EXTENSION_PAYPAL_URL);
+ * console.log(EXTENSION_BUY_ME_A_COFFEE_URL);
  *
- * @returns {string} - The PayPal URL of the extension
+ * @returns {string} - The Buy Me A Coffee URL of the extension
  */
-export const EXTENSION_PAYPAL_URL: string =
-  'https://www.paypal.com/paypalme/ManuelFGil';
+export const EXTENSION_BUY_ME_A_COFFEE_URL: string =
+  'https://www.buymeacoffee.com/ManuelGil';
 
 /**
  * ALIAS: The default import alias.
@@ -218,14 +218,14 @@ export const WATCH: string[] = ['modules', 'components', 'services'];
 export const SHOW_PATH: boolean = true;
 
 /**
- * TURBO: Whether to use turbo or not.
+ * TURBO: Whether to use turbopack or not.
  * @type {boolean}
  * @public
  * @memberof Constants
  * @example
  * console.log(TURBO);
  *
- * @returns {boolean} - Whether to use turbo or not
+ * @returns {boolean} - Whether to use turbopack or not
  */
 export const TURBO: boolean = true;
 

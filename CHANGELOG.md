@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2025-07-18
+
+### Added
+
+- Add `server-action.code-snippets` for creating server action hooks in React
+
+### Changed
+
+- Enhance `reactjs.code-snippets` with new hooks: `useActionState` and `useAsyncScope`
+- Refine `list-files.controller.ts` to improve file handling logic
+- Adjust `terminal.controller.ts` to use "turbopack" in command execution
+- Improve `feedback.provider.ts` by extending `TreeRefreshBase` for better event handling
+- Enhance `list-components.providers.ts` with caching for improved performance
+- Update `list-hooks.providers.ts` to include new hooks and caching logic
+- Refactor `list-routes.providers.ts` for better route handling and caching
+- Introduce `tree-refresh-base.ts` for shared refresh logic across providers
+
 ## [2.7.0] - 2025-07-12
 
 ### Added
@@ -225,7 +242,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.7.0...HEAD
+[unreleased]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.8.0...HEAD
+[2.8.0]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/ManuelGil/vscode-nextjs-generator/compare/v2.5.0...v2.5.1

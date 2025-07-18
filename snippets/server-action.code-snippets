@@ -1,0 +1,21 @@
+{
+  "Server Action Hook": {
+    "prefix": "useServerAction",
+    "body": [
+      "import { experimental_useServerAction as useServerAction } from 'react';",
+      "",
+      "export default function $1() {",
+      "  const action = useServerAction(async (input) => {",
+      "    // Handle the action logic here",
+      "  });",
+      "  return (",
+      "    <form action={action}>",
+      "      <button type=\"submit\">Submit</button>",
+      "      {/* Add your form fields here */}",
+      "    </form>",
+      "  );",
+      "}"
+    ],
+    "description": "Creates a server action hook using React's experimental feature."
+  }
+}

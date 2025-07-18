@@ -598,6 +598,16 @@
     "scope": "javascript,javascriptreact,typescript,typescriptreact",
     "body": "const $1 = useTransition($2);"
   },
+  "useActionState": {
+    "prefix": ["react_use_action_state", "useActionState"],
+    "scope": "javascript,javascriptreact,typescript,typescriptreact",
+    "body": "const $1 = useActionState($2);"
+  },
+  "useAsyncScope": {
+    "prefix": ["react_use_async_scope", "useAsyncScope"],
+    "scope": "javascript,javascriptreact,typescript,typescriptreact",
+    "body": "const $1 = useAsyncScope($2);"
+  },
   "describe": {
     "prefix": ["react_describe", "describe"],
     "scope": "javascript,javascriptreact,typescript,typescriptreact",

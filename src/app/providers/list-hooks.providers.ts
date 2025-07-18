@@ -1,3 +1,4 @@
+import pLimit from 'p-limit';
 import {
   ProviderResult,
   ThemeIcon,
@@ -5,11 +6,11 @@ import {
   TreeItem,
   workspace,
 } from 'vscode';
-import { TreeRefreshBase } from './tree-refresh-base';
 
 import { EXTENSION_ID } from '../configs';
 import { ListFilesController } from '../controllers';
 import { NodeModel } from '../models';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 /**
  * The ListHooksProvider class
@@ -32,6 +33,26 @@ export class ListHooksProvider
   // -----------------------------------------------------------------
 
   // Private properties
+  /**
+   * The cached nodes.
+   * @type {NodeModel[] | undefined}
+   * @private
+   * @memberof ListHooksProvider
+   * @example
+   * this._cachedNodes = undefined;
+   */
+  private _cachedNodes: NodeModel[] | undefined = undefined;
+
+  /**
+   * The cache promise.
+   * @type {Promise<NodeModel[] | undefined> | undefined}
+   * @private
+   * @memberof ListHooksProvider
+   * @example
+   * this._cachePromise = undefined;
+   */
+  private _cachePromise: Promise<NodeModel[] | undefined> | undefined =
+    undefined;
 
   // -----------------------------------------------------------------
   // Constructor
@@ -42,6 +63,7 @@ export class ListHooksProvider
    *
    * @constructor
    * @public
+   * @memberof ListHooksProvider
    */
   constructor() {
     super();
@@ -77,68 +99,113 @@ export class ListHooksProvider
       return element.children;
     }
 
-    return this.getListHooks();
+    if (this._cachedNodes) {
+      return this._cachedNodes;
+    }
+
+    if (this._cachePromise) {
+      return this._cachePromise;
+    }
+
+    this._cachePromise = this.getListHooks().then((nodes) => {
+      this._cachedNodes = nodes;
+      this._cachePromise = undefined;
+      return nodes;
+    });
+
+    return this._cachePromise;
+  }
+
+  /**
+   * Refreshes the tree data by firing the event.
+   *
+   * @function refresh
+   * @public
+   * @returns {void} - No return value
+   */
+  refresh(): void {
+    this._cachedNodes = undefined;
+    this._cachePromise = undefined;
+    super.refresh();
+  }
+
+  /**
+   * Disposes the provider.
+   *
+   * @function dispose
+   * @public
+   * @memberof ListHooksProvider
+   * @example
+   * provider.dispose();
+   *
+   * @returns {void} - No return value
+   */
+  dispose(): void {
+    super.dispose();
   }
 
   // Private methods
   /**
    * Returns the list of hook nodes with their children.
    * @private
-   * @returns {Promise<NodeModel[] | undefined>} List of hook nodes or undefined if none exist.
+   * @returns {Promise<NodeModel[]>} List of hook nodes or undefined if none exist.
    */
-  private async getListHooks(): Promise<NodeModel[] | undefined> {
+  private async getListHooks(): Promise<NodeModel[]> {
     const allFiles = await ListFilesController.getFiles();
 
     if (!allFiles) {
-      return;
+      return [];
     }
 
-    for (const file of allFiles) {
-      const document = await workspace.openTextDocument(
-        file.resourceUri?.path ?? '',
-      );
+    const reactHookRegex =
+      /\b(useCallback|useContext|useDebugValue|useDeferredValue|useEffect|useId|useImperativeHandle|useInsertionEffect|useLayoutEffect|useMemo|useReducer|useRef|useState|useSyncExternalStore|useTransition|useActionState|useAsyncScope)\b/i;
 
-      // Create an array of line nodes for each file
-      const lineNodes = Array.from(
-        { length: document.lineCount },
-        (_, index) => {
-          const line = document.lineAt(index);
+    const limit = pLimit(2);
 
-          // Create a hook node for each line that matches the hook pattern
-          let hookNode: NodeModel | undefined;
-
-          if (
-            line.text.match(
-              /(useCallback|useContext|useDebugValue|useDeferredValue|useEffect|useId|useImperativeHandle|useInsertionEffect|useLayoutEffect|useMemo|useReducer|useRef|useState|useSyncExternalStore|useTransition)/gi,
-            )
-          ) {
-            hookNode = new NodeModel(
-              line.text.trim(),
-              new ThemeIcon('symbol-method'),
-              {
-                command: `${EXTENSION_ID}.list.gotoLine`,
-                title: line.text,
-                arguments: [file.resourceUri, index],
-              },
-            );
+    await Promise.all(
+      allFiles.map((file) =>
+        limit(async () => {
+          if (!file.resourceUri) {
+            return file.setChildren([]);
           }
 
-          return hookNode;
-        },
-      );
+          try {
+            const document = await workspace.openTextDocument(
+              file.resourceUri.fsPath,
+            );
+            const children: NodeModel[] = [];
 
-      // Set the children of the file to the line nodes
-      file.setChildren(
-        lineNodes.filter((child) => child !== undefined) as NodeModel[],
-      );
-    }
+            for (let i = 0; i < document.lineCount; i++) {
+              const text = document.lineAt(i).text;
+              const match = reactHookRegex.exec(text);
+              if (match) {
+                const hookName = match[1];
+                children.push(
+                  new NodeModel(hookName, new ThemeIcon('symbol-method'), {
+                    command: `${EXTENSION_ID}.list.gotoLine`,
+                    title: hookName,
+                    arguments: [file.resourceUri, i],
+                  }),
+                );
+              }
+            }
 
-    // Filter the files to only include those with children
-    const hookNodes = allFiles.filter(
-      (file) => file.children && file.children.length !== 0,
+            file.setChildren(children);
+          } catch (err) {
+            console.error(
+              `Error reading file ${file.resourceUri?.fsPath}:`,
+              err instanceof Error ? err.message : String(err),
+            );
+
+            file.setChildren([]);
+          }
+        }),
+      ),
     );
 
     // Return the hook nodes, or undefined if there are none
-    return hookNodes.length > 0 ? hookNodes : undefined;
+    return allFiles.filter(
+      (file) => file.children && file.children.length !== 0,
+    );
   }
 }

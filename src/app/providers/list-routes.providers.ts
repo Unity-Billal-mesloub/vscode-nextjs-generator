@@ -1,3 +1,4 @@
+import pLimit from 'p-limit';
 import {
   ProviderResult,
   ThemeIcon,
@@ -5,11 +6,11 @@ import {
   TreeItem,
   workspace,
 } from 'vscode';
-import { TreeRefreshBase } from './tree-refresh-base';
 
 import { EXTENSION_ID } from '../configs';
 import { ListFilesController } from '../controllers';
 import { NodeModel } from '../models';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 /**
  * The ListRoutesProvider class
@@ -32,6 +33,26 @@ export class ListRoutesProvider
   // -----------------------------------------------------------------
 
   // Private properties
+  /**
+   * The cached nodes.
+   * @type {NodeModel[] | undefined}
+   * @private
+   * @memberof ListRoutesProvider
+   * @example
+   * this._cachedNodes = undefined;
+   */
+  private _cachedNodes: NodeModel[] | undefined = undefined;
+
+  /**
+   * The cache promise.
+   * @type {Promise<NodeModel[] | undefined> | undefined}
+   * @private
+   * @memberof ListRoutesProvider
+   * @example
+   * this._cachePromise = undefined;
+   */
+  private _cachePromise: Promise<NodeModel[] | undefined> | undefined =
+    undefined;
 
   // -----------------------------------------------------------------
   // Constructor
@@ -42,6 +63,7 @@ export class ListRoutesProvider
    *
    * @constructor
    * @public
+   * @memberof ListRoutesProvider
    */
   constructor() {
     super();
@@ -77,64 +99,107 @@ export class ListRoutesProvider
       return element.children;
     }
 
-    return this.getListRoutes();
+    if (this._cachedNodes) {
+      return this._cachedNodes;
+    }
+
+    if (this._cachePromise) {
+      return this._cachePromise;
+    }
+
+    this._cachePromise = this.getListRoutes().then((nodes) => {
+      this._cachedNodes = nodes;
+      this._cachePromise = undefined;
+      return nodes;
+    });
+
+    return this._cachePromise;
+  }
+
+  /**
+   * Refreshes the tree data by firing the event.
+   *
+   * @function refresh
+   * @public
+   * @returns {void} - No return value
+   */
+  refresh(): void {
+    this._cachedNodes = undefined;
+    this._cachePromise = undefined;
+    super.refresh();
+  }
+
+  /**
+   * Disposes the provider.
+   *
+   * @function dispose
+   * @public
+   * @memberof ListRoutesProvider
+   * @example
+   * provider.dispose();
+   *
+   * @returns {void} - No return value
+   */
+  dispose(): void {
+    super.dispose();
   }
 
   // Private methods
   /**
    * Returns the list of route nodes with their children.
    * @private
-   * @returns {Promise<NodeModel[] | undefined>} List of route nodes or undefined if none exist.
+   * @returns {Promise<NodeModel[]>} List of route nodes or undefined if none exist.
    */
-  private async getListRoutes(): Promise<NodeModel[] | undefined> {
+  private async getListRoutes(): Promise<NodeModel[]> {
     const allFiles = await ListFilesController.getFiles();
 
     if (!allFiles) {
-      return;
+      return [];
     }
 
-    for (const file of allFiles) {
-      const document = await workspace.openTextDocument(
-        file.resourceUri?.path ?? '',
-      );
+    const limit = pLimit(2);
 
-      // Create an array of line nodes for each file
-      const lineNodes = Array.from(
-        { length: document.lineCount },
-        (_, index) => {
-          const line = document.lineAt(index);
-
-          // Create a route node for each line that matches the pattern
-          let routeNode: NodeModel | undefined;
-
-          if (line.text.match(/:[\w\s]+procedure/gi)) {
-            routeNode = new NodeModel(
-              line.text.trim(),
-              new ThemeIcon('symbol-method'),
-              {
-                command: `${EXTENSION_ID}.list.gotoLine`,
-                title: line.text,
-                arguments: [file.resourceUri, index],
-              },
-            );
+    await Promise.all(
+      allFiles.map((file) =>
+        limit(async () => {
+          if (!file.resourceUri) {
+            return file.setChildren([]);
           }
+          try {
+            const document = await workspace.openTextDocument(file.resourceUri);
 
-          return routeNode;
-        },
-      );
+            const children: NodeModel[] = [];
 
-      // Set the children of the file to the line nodes
-      file.setChildren(
-        lineNodes.filter((child) => child !== undefined) as NodeModel[],
-      );
-    }
+            for (let i = 0; i < document.lineCount; i++) {
+              const line = document.lineAt(i);
 
-    // Filter the files to only include those with children
-    const routeNodes = allFiles.filter(
-      (file) => file.children && file.children.length !== 0,
+              if (line.text.match(/:[\w\s]+procedure/gi)) {
+                children.push(
+                  new NodeModel(
+                    line.text.trim(),
+                    new ThemeIcon('symbol-method'),
+                    {
+                      command: `${EXTENSION_ID}.list.gotoLine`,
+                      title: line.text,
+                      arguments: [file.resourceUri, i],
+                    },
+                  ),
+                );
+              }
+            }
+            file.setChildren(children);
+          } catch (error) {
+            console.error(
+              `Error reading file ${file.resourceUri?.fsPath}:`,
+              error instanceof Error ? error.message : String(error),
+            );
+
+            file.setChildren([]);
+          }
+        }),
+      ),
     );
 
-    // Return the route nodes, or undefined if none exist
-    return routeNodes.length > 0 ? routeNodes : undefined;
+    return allFiles.filter((file) => file.children?.length !== 0);
   }
 }

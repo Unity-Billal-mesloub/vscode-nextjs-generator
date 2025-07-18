@@ -2,7 +2,7 @@
   "name": "vscode-nextjs-generator",
   "displayName": "T3 Stack / Next.js / React File Generator",
   "description": "⚛ Generate boilerplate files for Next.js, React, Prisma, Drizzle, TailwindCSS, i18next, Zod, and more in your T3 Stack projects. Speed up your workflow with ready-to-use snippets and commands, all from VSCode-based editor.",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "icon": "icon.png",
   "galleryBanner": {
     "color": "#52137b",
@@ -89,6 +89,7 @@
     "modules",
     "next 13",
     "next 14",
+    "next 15",
     "next auth",
     "next-auth",
     "next.js",
@@ -98,12 +99,14 @@
     "nextjs 14",
     "nextjs-13",
     "nextjs-14",
+    "nextjs-15",
     "nextjs-file-generator",
     "nextjs-file",
     "nextjs-generator",
     "nextjs",
     "nextjs13",
     "nextjs14",
+    "nextjs15",
     "nextjsfile",
     "nextjsfilegenerator",
     "nextjsgenerator",
@@ -129,12 +132,14 @@
     "react 16",
     "react 17",
     "react 18",
+    "react 19",
     "react.js",
     "react",
     "reactjs",
     "reactjs16",
     "reactjs17",
     "reactjs18",
+    "reactjs19",
     "reactjsfile",
     "reactjsfilegenerator",
     "reactjsgenerator",
@@ -172,6 +177,7 @@
     "tsx",
     "turbo-mode",
     "turbo",
+    "turbopack",
     "typescript",
     "vercel",
     "vscode extension",
@@ -263,11 +269,11 @@
           "scope": "resource",
           "description": "Show the path of the file in the name of the list of generated files"
         },
-        "nextjs.server.turbo": {
+        "nextjs.server.turbopack": {
           "type": "boolean",
           "default": false,
           "scope": "resource",
-          "description": "Star server in turbo mode (only for NextJS 14+)"
+          "description": "Star server in Turbopack mode (Next.js 14+ only). Uses the `--turbopack` flag."
         },
         "nextjs.server.experimentalHttps": {
           "type": "boolean",
@@ -301,6 +307,9 @@
       },
       {
         "path": "./snippets/reactjs.code-snippets"
+      },
+      {
+        "path": "./snippets/server-action.code-snippets"
       },
       {
         "path": "./snippets/tailwindcss.code-snippets"
@@ -887,6 +896,7 @@
     "json-schema-to-zod": "^2.6.1",
     "json-to-ts": "^2.1.0",
     "json5": "^2.2.3",
+    "p-limit": "^6.2.0",
     "vscode-marketplace-client": "^1.1.0"
   }
 }

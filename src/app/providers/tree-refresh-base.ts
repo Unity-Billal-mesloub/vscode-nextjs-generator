@@ -16,9 +16,20 @@ export abstract class TreeRefreshBase<T> {
    */
   readonly onDidChangeTreeData: Event<T | undefined | null | void>;
 
+  /**
+   * Constructor for the TreeRefreshBase class.
+   * Initializes the event emitter and sets up the onDidChangeTreeData event.
+   */
   constructor() {
     this._onDidChangeTreeData = new EventEmitter<T | undefined | null | void>();
     this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+  }
+
+  /**
+   * Disposes the event emitter.
+   */
+  dispose(): void {
+    this._onDidChangeTreeData.dispose();
   }
 
   /**

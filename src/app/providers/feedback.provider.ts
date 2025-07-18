@@ -1,15 +1,9 @@
-import {
-  Event,
-  EventEmitter,
-  ProviderResult,
-  ThemeIcon,
-  TreeDataProvider,
-  TreeItem,
-} from 'vscode';
+import { ProviderResult, ThemeIcon, TreeDataProvider, TreeItem } from 'vscode';
 
 import { EXTENSION_ID } from '../configs';
 import { FeedbackController } from '../controllers';
 import { NodeModel } from '../models';
+import { TreeRefreshBase } from './tree-refresh-base';
 
 /**
  * The FeedbackProvider class
@@ -27,41 +21,10 @@ import { NodeModel } from '../models';
  *
  * @see https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider
  */
-export class FeedbackProvider implements TreeDataProvider<NodeModel> {
-  // -----------------------------------------------------------------
-  // Properties
-  // -----------------------------------------------------------------
-
-  // Private properties
-  /**
-   * The onDidChangeTreeData event emitter.
-   * @type {EventEmitter<NodeModel | undefined | null | void>}
-   * @private
-   * @memberof FeedbackProvider
-   * @example
-   * this._onDidChangeTreeData = new EventEmitter<Node | undefined | null | void>();
-   * this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#EventEmitter
-   */
-  private _onDidChangeTreeData: EventEmitter<
-    NodeModel | undefined | null | void
-  >;
-
-  // Public properties
-  /**
-   * The onDidChangeTreeData event.
-   * @type {Event<NodeModel | undefined | null | void>}
-   * @public
-   * @memberof FeedbackProvider
-   * @example
-   * readonly onDidChangeTreeData: Event<Node | undefined | null | void>;
-   * this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-   *
-   * @see https://code.visualstudio.com/api/references/vscode-api#Event
-   */
-  readonly onDidChangeTreeData: Event<NodeModel | undefined | null | void>;
-
+export class FeedbackProvider
+  extends TreeRefreshBase<NodeModel>
+  implements TreeDataProvider<NodeModel>
+{
   // -----------------------------------------------------------------
   // Constructor
   // -----------------------------------------------------------------
@@ -75,10 +38,7 @@ export class FeedbackProvider implements TreeDataProvider<NodeModel> {
    * @memberof FeedbackProvider
    */
   constructor(readonly controller: FeedbackController) {
-    this._onDidChangeTreeData = new EventEmitter<
-      NodeModel | undefined | null | void
-    >();
-    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    super();
   }
 
   // -----------------------------------------------------------------
@@ -138,7 +98,22 @@ export class FeedbackProvider implements TreeDataProvider<NodeModel> {
    * @returns {void} - No return value
    */
   refresh(): void {
-    this._onDidChangeTreeData.fire();
+    super.refresh();
+  }
+
+  /**
+   * Disposes the provider.
+   *
+   * @function dispose
+   * @public
+   * @memberof FeedbackProvider
+   * @example
+   * provider.dispose();
+   *
+   * @returns {void} - No return value
+   */
+  dispose(): void {
+    super.dispose();
   }
 
   // Private methods

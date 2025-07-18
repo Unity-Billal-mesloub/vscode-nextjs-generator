@@ -80,7 +80,7 @@ Add or update `.vscode/settings.json` in your project root:
   ],
   "nextjs.files.watch": ["components","pages","api"],
   "nextjs.files.showPath": true,           // Display path in file name labels
-  "nextjs.server.turbo": true,             // Enable Turbo mode (Next.js 14+)
+  "nextjs.server.turbopack": true,             // Enable Turbo mode (Next.js 14+)
   "nextjs.server.experimentalHttps": true  // Enable HTTPS (Next.js 14+)
 }
 ```

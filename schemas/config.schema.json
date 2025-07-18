@@ -65,11 +65,11 @@
       "scope": "resource",
       "description": "Show the path of the file in the name of the list of generated files"
     },
-    "nextjs.server.turbo": {
+    "nextjs.server.turbopack": {
       "type": "boolean",
       "default": true,
       "scope": "resource",
-      "description": "Star server in turbo mode (only for NextJS 14+)"
+      "description": "Star server in Turbopack mode (Next.js 14+ only). Uses the `--turbopack` flag."
     },
     "nextjs.server.experimentalHttps": {
       "type": "boolean",
